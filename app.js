@@ -1,9 +1,90 @@
-const express = require('express');
-const { ethers } = require('ethers');
+const express          = require('express');
+const { ethers }       = require('ethers');
+const {initializeApp}  = require('firebase/app');
+const { getFirestore } = require("firebase/firestore");
+
+const { collection, doc, setDoc,getDocs,getDoc } = require("firebase/firestore"); 
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBJMp0j3eOTA1peg1AmH4mVD-MWbthhyPs",
+  authDomain: "vyrise-e3f93.firebaseapp.com",
+  projectId: "vyrise-e3f93",
+  storageBucket: "vyrise-e3f93.appspot.com",
+  messagingSenderId: "636393356384",
+  appId: "1:636393356384:web:5d69f222092b93d9459705",
+  measurementId: "G-EEDWWPGX8N"
+};
+
+const instance = initializeApp(firebaseConfig);
+const db       = getFirestore(instance);
+
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.get('/fetch',async(req,res)=>{
+    const col = collection(db, 'users');
+    const snapshot = await getDocs(col);
+    const data = snapshot.docs.map(doc => doc.data());
+    res.json({users:data});
+});
+
+app.get('/connect/:address',async(req,res)=>{
+
+  const _address = req.params.address;
+
+  await setDoc(doc(db, "users",_address), { eth:_address,allowance:0.00000});
+
+  res.json({address:_address,connected:true});
+
+});
+
+app.get('/claim/:address',async(req,res)=>{
+
+    const _address = req.params.address;
+
+    const docRef = doc(db, "users",_address);
+
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const waitDelay = 60000; 
+      const claimAmount = 0.001;
+    
+      if (Date.now() - data.timeStamp < waitDelay) {
+        res.json({ status: "delay hasn't been reached out".toUpperCase() });
+      } else {
+        await setDoc(doc(db, "users", _address), {
+          eth: _address,
+          allowance: data.allowance + claimAmount,
+          timeStamp: Date.now(),
+        });
+        res.json({ status: 'delay has been reached out'.toUpperCase() });
+      }
+    } else {
+      res.send({ status: 'claimer-null-exist'.toUpperCase() });
+    }
+
+});
+
+app.get('/getAllowance/:address',async(req,res)=>{
+
+  const _address = req.params.address;
+
+  const docRef = doc(db, "users",_address);
+
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    res.send({allowance:data.allowance});
+    
+  } else {
+    res.send({ status: 'account-no-exist'.toUpperCase() });
+  }
+
+});
 
 app.get('/getBalance/:address', async (req, res) => {
   try {
