@@ -2,6 +2,7 @@ const express          = require('express');
 const { ethers }       = require('ethers');
 const {initializeApp}  = require('firebase/app');
 const { getFirestore } = require("firebase/firestore");
+const { getAppCheck }  = require("firebase-admin/app-check");
 
 const { collection, doc, setDoc,getDocs,getDoc } = require("firebase/firestore"); 
 
@@ -22,29 +23,42 @@ const db       = getFirestore(instance);
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.get('/fetch',async(req,res)=>{
+const appCheckVerification = async (req, res, next) => {
+  const appCheckToken = req.header("X-Firebase-AppCheck");
+
+  if (!appCheckToken) {
+      res.status(401);
+      return next("Unauthorized");
+  }
+
+  try {
+      const appCheckClaims = await getAppCheck().verifyToken(appCheckToken);
+      return next();
+  } catch (err) {
+      res.status(401);
+      return next("Unauthorized");
+  }
+}
+
+app.get('/fetch', [appCheckVerification],async(req,res)=>{
     const col = collection(db, 'users');
     const snapshot = await getDocs(col);
     const data = snapshot.docs.map(doc => doc.data());
     res.json({users:data});
 });
 
-app.get('/connect/:address',async(req,res)=>{
+app.get('/connect/:address', [appCheckVerification],async(req,res)=>{
 
   const _address = req.params.address;
-
   await setDoc(doc(db, "users",_address), { eth:_address,allowance:0.00000});
-
   res.json({address:_address,connected:true});
 
 });
 
-app.get('/claim/:address',async(req,res)=>{
+app.get('/claim/:address', [appCheckVerification],async(req,res)=>{
 
     const _address = req.params.address;
-
     const docRef = doc(db, "users",_address);
-
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -68,12 +82,10 @@ app.get('/claim/:address',async(req,res)=>{
 
 });
 
-app.get('/getAllowance/:address',async(req,res)=>{
+app.get('/getAllowance/:address', [appCheckVerification],async(req,res)=>{
 
   const _address = req.params.address;
-
   const docRef = doc(db, "users",_address);
-
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
@@ -86,14 +98,11 @@ app.get('/getAllowance/:address',async(req,res)=>{
 
 });
 
-app.get('/getBalance/:address', async (req, res) => {
+app.get('/getBalance/:address', [appCheckVerification],async (req, res) => {
   try {
     const address = req.params.address;
-
     const provider = await new ethers.providers.JsonRpcProvider('https://rpc-mumbai.maticvigil.com');
-
     const balance = await provider.getBalance(address);
-
     const etherBalance = ethers.utils.formatEther(balance);
 
     res.json({ address, balance: etherBalance });
