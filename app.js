@@ -50,7 +50,7 @@ app.get('/fetch',async(req,res)=>{
 app.get('/connect/:address',async(req,res)=>{
 
   const _address = req.params.address;
-  await setDoc(doc(db, "users",_address), { eth:_address,rate:0.00001,allowance:0.00000,timeStamp:0});
+  await setDoc(doc(db, "users",_address), { eth:_address,rate:ethers.utils.parseUnits('1','gwei'),allowance:0,timeStamp:0});
   res.json({address:_address,connected:true});
 
 });
