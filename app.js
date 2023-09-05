@@ -50,7 +50,7 @@ app.get('/fetch',async(req,res)=>{
 app.get('/connect/:address',async(req,res)=>{
 
   const _address = req.params.address;
-  await setDoc(doc(db, "users",_address), { eth:_address,rate:10e-9,allowance:0,timeStamp:0});
+  await setDoc(doc(db, "users",_address), { eth:_address,rate:1000000000,allowance:0,timeStamp:0});
   res.json({address:_address,connected:true});
 
 });
