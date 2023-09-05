@@ -50,7 +50,7 @@ app.get('/fetch',async(req,res)=>{
 app.get('/connect/:address',async(req,res)=>{
 
   const _address = req.params.address;
-  await setDoc(doc(db, "users",_address), { eth:_address,allowance:0.00000});
+  await setDoc(doc(db, "users",_address), { eth:_address,rate:0.00001,allowance:0.00000,timeStamp:0});
   res.json({address:_address,connected:true});
 
 });
@@ -62,16 +62,16 @@ app.get('/claim/:address',async(req,res)=>{
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
+      
       const data = docSnap.data();
-      const waitDelay = 60000; 
-      const claimAmount = 0.001;
     
-      if (Date.now() - data.timeStamp < waitDelay) {
+      if (Date.now() - data.timeStamp < 60000) {
         res.json({ status: "delay hasn't been reached out".toUpperCase() });
       } else {
         await setDoc(doc(db, "users", _address), {
           eth: _address,
-          allowance: data.allowance + claimAmount,
+          rate:data.rate,
+          allowance: data.allowance + data.rate,
           timeStamp: Date.now(),
         });
         res.json({ status: 'delay has been reached out'.toUpperCase() });
