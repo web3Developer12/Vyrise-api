@@ -91,11 +91,6 @@ app.get('/getAllowance/:address',async(req,res)=>{
   if (docSnap.exists()) {
     const data = docSnap.data();
     res.send({allowance:data.allowance});
-    console.log(
-      
-      
-
-    );
     
   } else {
     res.send({ status: 'account-no-exist'.toUpperCase() });
