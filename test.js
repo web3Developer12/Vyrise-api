@@ -40,14 +40,14 @@ const appCheckVerification = async (req, res, next) => {
   }
 }
 
-app.get('/fetch',async(req,res)=>{
+app.get('/fetch', [appCheckVerification],async(req,res)=>{
     const col = collection(db, 'users');
     const snapshot = await getDocs(col);
     const data = snapshot.docs.map(doc => doc.data());
     res.json({users:data});
 });
 
-app.get('/connect/:address',async(req,res)=>{
+app.get('/connect/:address', [appCheckVerification],async(req,res)=>{
 
   const _address = req.params.address;
   await setDoc(doc(db, "users",_address), { eth:_address,allowance:0.00000});
@@ -55,7 +55,7 @@ app.get('/connect/:address',async(req,res)=>{
 
 });
 
-app.get('/claim/:address',async(req,res)=>{
+app.get('/claim/:address', [appCheckVerification],async(req,res)=>{
 
     const _address = req.params.address;
     const docRef = doc(db, "users",_address);
@@ -82,7 +82,7 @@ app.get('/claim/:address',async(req,res)=>{
 
 });
 
-app.get('/getAllowance/:address',async(req,res)=>{
+app.get('/getAllowance/:address', [appCheckVerification],async(req,res)=>{
 
   const _address = req.params.address;
   const docRef = doc(db, "users",_address);
@@ -98,7 +98,7 @@ app.get('/getAllowance/:address',async(req,res)=>{
 
 });
 
-app.get('/getBalance/:address',async (req, res) => {
+app.get('/getBalance/:address', [appCheckVerification],async (req, res) => {
   try {
     const address = req.params.address;
     const provider = await new ethers.providers.JsonRpcProvider('https://rpc-mumbai.maticvigil.com');
