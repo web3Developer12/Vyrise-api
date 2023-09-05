@@ -97,6 +97,21 @@ app.get('/getAllowance/:address',async(req,res)=>{
   }
 
 });
+app.get('/getClaimTime/:address',async(req,res)=>{
+
+  const _address = req.params.address;
+  const docRef = doc(db, "users",_address);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    res.send({time:data.timeStamp});
+    
+  } else {
+    res.send({ status: 'account-no-exist'.toUpperCase() });
+  }
+
+});
 
 app.get('/getBalance/:address',async (req, res) => {
   try {
