@@ -2,9 +2,8 @@ const express          = require('express');
 const { ethers }       = require('ethers');
 const {initializeApp}  = require('firebase/app');
 const { getFirestore } = require("firebase/firestore");
-const { getAppCheck }  = require("firebase-admin/app-check");
 
-const { collection, doc, setDoc,getDocs,getDoc } = require("firebase/firestore"); 
+const { collection, doc, setDoc,getDocs} = require("firebase/firestore"); 
 
 const firebaseConfig = {
   apiKey: "AIzaSyBJMp0j3eOTA1peg1AmH4mVD-MWbthhyPs",
@@ -19,26 +18,9 @@ const firebaseConfig = {
 const instance = initializeApp(firebaseConfig);
 const db       = getFirestore(instance);
 
-
 const app = express();
 const port = process.env.PORT || 3000;
 
-const appCheckVerification = async (req, res, next) => {
-  const appCheckToken = req.header("X-Firebase-AppCheck");
-
-  if (!appCheckToken) {
-      res.status(401);
-      return next("Unauthorized");
-  }
-
-  try {
-      const appCheckClaims = await getAppCheck().verifyToken(appCheckToken);
-      return next();
-  } catch (err) {
-      res.status(401);
-      return next("Unauthorized");
-  }
-}
 
 app.get('/fetch',async(req,res)=>{
     const col = collection(db, 'users');
@@ -49,66 +31,43 @@ app.get('/fetch',async(req,res)=>{
 
 app.get('/connect/:address',async(req,res)=>{
 
-  const _address = req.params.address;
-  await setDoc(doc(db, "users",_address), { eth:_address,rate:1000000000,allowance:0,timeStamp:0});
-  res.json({address:_address,connected:true});
+  const address = req.params.address;
+  await setDoc(doc(db, "users",_address), { 
+    eth:address,
+    rate:1000000000,
+    allowance:0,
+    timeStamp:Date.now(),
+    gainHistory:[],
+    withdrawHistory:[],
+    team:[],
+    lastTimeBackup:0,
+  });
+  res.json({address:address,connected:true});
 
 });
 
-app.get('/claim/:address',async(req,res)=>{
+app.get('/backup/:address',async(req,res)=>{
 
-    const _address = req.params.address;
-    const docRef = doc(db, "users",_address);
-    const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-      
-      const data = docSnap.data();
-    
-      if (Date.now() - data.timeStamp < 60000) {
-        res.json({ status: "delay hasn't been reached out".toUpperCase() });
-      } else {
-        await setDoc(doc(db, "users", _address), {
-          eth: _address,
-          rate:data.rate,
-          allowance: data.allowance + data.rate,
-          timeStamp: Date.now(),
-        });
-        res.json({ status: 'delay has been reached out'.toUpperCase() });
-      }
-    } else {
-      res.send({ status: 'claimer-null-exist'.toUpperCase() });
-    }
-
-});
-
-app.get('/getAllowance/:address',async(req,res)=>{
-
-  const _address = req.params.address;
-  const docRef = doc(db, "users",_address);
+  const docRef = doc(db, "users",address);
   const docSnap = await getDoc(docRef);
 
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    res.send({allowance:data.allowance});
-    
-  } else {
-    res.send({ status: 'account-no-exist'.toUpperCase() });
-  }
+  const { address, allowance, rate,gainHistory,withdrawHistory,team } = docSnap.data;
 
-});
-app.get('/getClaimTime/:address',async(req,res)=>{
-
-  const _address = req.params.address;
-  const docRef = doc(db, "users",_address);
-  const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    const data = docSnap.data();
-    res.send({time:data.timeStamp});
-    
-  } else {
-    res.send({ status: 'account-no-exist'.toUpperCase() });
+    await setDoc(doc(db, "users",_address), { 
+      eth:address,
+      rate:rate,
+      allowance:allowance,
+      timeStamp:Date.now(),
+      gainHistory:gainHistory,
+      withdrawHistory:withdrawHistory,
+      team:team,
+      lastTimeBackup:Date.now(),
+    });
+  }else{
+    res.send({status:"BACKUP_FAILED"});
   }
 
 });
