@@ -32,7 +32,7 @@ app.get('/fetch',async(req,res)=>{
 app.get('/connect/:address',async(req,res)=>{
 
   const address = req.params.address;
-  await setDoc(doc(db, "users",_address), { 
+  await setDoc(doc(db, "users",address), { 
     eth:address,
     rate:1000000000,
     allowance:0,
@@ -49,7 +49,7 @@ app.get('/connect/:address',async(req,res)=>{
 app.get('/backup/:address',async(req,res)=>{
 
 
-  const docRef = doc(db, "users",address);
+  const docRef = doc(db, "users",req.params.address);
   const docSnap = await getDoc(docRef);
 
   const { address, allowance, rate,gainHistory,withdrawHistory,team } = docSnap.data;
