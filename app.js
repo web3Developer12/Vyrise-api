@@ -29,9 +29,10 @@ app.get('/fetch',async(req,res)=>{
     res.json({users:data});
 });
 
-app.get('/connect/:address',async(req,res)=>{
+app.get('/connect/:address/:refCode',async(req,res)=>{
 
   const address = req.params.address;
+  const refCode = req.params.refCode;
   await setDoc(doc(db, "users",address), { 
     eth:address,
     rate:1000000000,
@@ -41,6 +42,7 @@ app.get('/connect/:address',async(req,res)=>{
     withdrawHistory:[],
     team:[],
     lastTimeBackup:0,
+    refferalId:refCode
   });
   res.json({address:address,connected:true});
 
@@ -52,7 +54,7 @@ app.get('/backup/:address',async(req,res)=>{
   const docRef = doc(db, "users",req.params.address);
   const docSnap = await getDoc(docRef);
 
-  const { address, allowance, rate,gainHistory,withdrawHistory,team } = docSnap.data;
+  const { address, allowance, rate,gainHistory,withdrawHistory,team,refferalId } = docSnap.data;
 
 
   if (docSnap.exists()) {
@@ -65,6 +67,7 @@ app.get('/backup/:address',async(req,res)=>{
       withdrawHistory:withdrawHistory,
       team:team,
       lastTimeBackup:Date.now(),
+      refferalId:refferalId
     });
   }else{
     res.send({status:"BACKUP_FAILED"});
