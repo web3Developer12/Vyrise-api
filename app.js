@@ -56,7 +56,6 @@ app.get('/backup/:address',async(req,res)=>{
 
   const { address, allowance, rate,gainHistory,withdrawHistory,team,refferalId } = docSnap.data;
 
-
   if (docSnap.exists()) {
     await setDoc(doc(db, "users",_address), { 
       eth:address,
