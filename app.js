@@ -48,7 +48,7 @@ app.get('/connect/:address/:refCode',async(req,res)=>{
 
 });
 
-app.get('/backup/:address/:_allowance/:_gainHistory/:_withdrawHistory/:_team',async(req,res)=>{
+app.get('/backup/:address/:_rate/:_allowance/:_gainHistory/:_withdrawHistory/:_team',async(req,res)=>{
 
 
   const docRef = doc(db, "users",req.params.address);
