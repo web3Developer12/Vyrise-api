@@ -3,7 +3,7 @@ const { ethers }       = require('ethers');
 const {initializeApp}  = require('firebase/app');
 const { getFirestore } = require("firebase/firestore");
 
-const { collection, doc, setDoc,getDocs} = require("firebase/firestore"); 
+const { collection, doc, setDoc,getDocs,getDoc} = require("firebase/firestore"); 
 
 const firebaseConfig = {
   apiKey: "AIzaSyBJMp0j3eOTA1peg1AmH4mVD-MWbthhyPs",
