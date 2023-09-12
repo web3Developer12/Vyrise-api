@@ -69,6 +69,7 @@ app.get('/backup/:address/:_rate/:_allowance/:_gainHistory/:_withdrawHistory/:_t
       lastTimeBackup:Date.now(),
       refferalId:refferalId
     });
+    res.send({status:"BACKUP_DONE"});
   }else{
     res.send({status:"BACKUP_FAILED"});
   }
