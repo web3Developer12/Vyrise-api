@@ -56,7 +56,7 @@ app.get('/backup/:address/:_rate/:_allowance/:_gainHistory/:_withdrawHistory/:_t
 
   if (docSnap.exists()) {
 
-    const { eth,rate,refferalId } = docSnap.data;
+    const { eth,rate,refferalId } = docSnap.data();
 
     await setDoc(doc(db, "users",req.params.address), { 
       eth:eth,
