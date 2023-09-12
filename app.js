@@ -48,23 +48,23 @@ app.get('/connect/:address/:refCode',async(req,res)=>{
 
 });
 
-app.get('/backup/:address',async(req,res)=>{
+app.get('/backup/:address/:_allowance/:_gainHistory/:_withdrawHistory/:_team',async(req,res)=>{
 
 
   const docRef = doc(db, "users",req.params.address);
   const docSnap = await getDoc(docRef);
 
-  const { address, allowance, rate,gainHistory,withdrawHistory,team,refferalId } = docSnap.data;
+  const { address,rate,refferalId } = docSnap.data;
 
   if (docSnap.exists()) {
     await setDoc(doc(db, "users",_address), { 
       eth:address,
       rate:rate,
-      allowance:allowance,
+      allowance:req.params._allowance,
       timeStamp:Date.now(),
-      gainHistory:gainHistory,
-      withdrawHistory:withdrawHistory,
-      team:team,
+      gainHistory:req.params._gainHistory,
+      withdrawHistory:req.params._withdrawHistory,
+      team:req.params._team,
       lastTimeBackup:Date.now(),
       refferalId:refferalId
     });
