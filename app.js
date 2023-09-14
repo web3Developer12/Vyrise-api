@@ -21,7 +21,6 @@ const db       = getFirestore(instance);
 const app = express();
 const port = process.env.PORT || 3000;
 
-
 app.get('/fetch',async(req,res)=>{
     const col = collection(db, 'users');
     const snapshot = await getDocs(col);
@@ -33,18 +32,38 @@ app.get('/connect/:address/:refCode',async(req,res)=>{
 
   const address = req.params.address;
   const refCode = req.params.refCode;
-  await setDoc(doc(db, "users",address), { 
-    eth:address,
-    rate:1000000000,
-    allowance:0,
-    timeStamp:Date.now(),
-    gainHistory:[],
-    withdrawHistory:[],
-    team:[],
-    lastTimeBackup:0,
-    refferalId:refCode
-  });
-  res.json({address:address,connected:true});
+
+  const docRef = doc(db, "refferals","main");
+  const docRefferal = await getDoc(docRef);
+
+  if(docRefferal.exists()){
+
+    if(docRefferal.data().AllowedToBeInTeam.includes(refCode)){
+      res.json({address:address,connected:false});
+      return;
+    }
+
+    await setDoc(doc(db, "refferals","main"), {
+        AllowedToBeInTeam:[...docRefferal.data().AllowedToBeInTeam,refCode]
+     });
+
+     await setDoc(doc(db, "users",address), { 
+      eth:address,
+      rate:1000000000,
+      allowance:0,
+      timeStamp:Date.now(),
+      gainHistory:[],
+      withdrawHistory:[],
+      team:[],
+      lastTimeBackup:0,
+      refferalId:refCode
+    });
+    
+    res.json({status:"CONNECTED"});
+
+  }else{
+    res.json({status:"NOT CONNECTED"});
+  }
 
 });
 
@@ -87,11 +106,48 @@ app.get('/getBalance/:address',async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'An error occurred while fetching the balance.' });
+    res.status(500).json({ error: 'An error occurred while fetching the balance.'.toUpperCase() });
+  }
+});
+
+app.get('/addReference/:address/:refcodeMember',async (req, res) => {
+  try {
+    const docRef_1 = doc(db, "users",req.params.address);
+    const docUser = await getDoc(docRef_1);
+
+    if(!docUser.exists()){
+      res.json({status:"USER NOT IN RECORDS"});
+      return;
+    }else{
+      const userRefCode = docUser.data().refferalId;
+      if(userRefCode == req.params.refcodeMember){
+        res.json({status:"CANNOT REFERENCE YOURSELF"});
+        return;
+      }
+    }
+    const docRef_2 = doc(db, "refferals","main");
+    const docRefferal = await getDoc(docRef_2);
+    const allowedTobeInTeamList = docRefferal.data().AllowedToBeInTeam;
+    const membersAlreadyInTeamList = docRefferal.data().MembersAlreadyTaken;
+    
+    if(allowedTobeInTeamList.includes(req.params.refcodeMember) && membersAlreadyInTeamList.includes(req.params.refcodeMember) == false){
+
+      await setDoc(doc(db, "refferals","main"), {
+        AllowedToBeInTeam  :allowedTobeInTeamList,
+        MembersAlreadyTaken:[...membersAlreadyInTeamList,req.params.refcodeMember]
+     });
+     res.json({status:"REFERENCE ADDED SUCCESSFULLY"});
+
+    }else if(allowedTobeInTeamList.includes(req.params.refcodeMember) == false){
+      res.json({status:"REFERENCE CODE DOESN't EXIST"});
+    }
+
+  } catch (error) {
+    res.status(500).json({ error: error });
   }
 });
 
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`SERVER RUNNING ON PORT ${port}`);
 });
