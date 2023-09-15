@@ -135,10 +135,13 @@ app.get('/addReference/:address/:refcodeMember',async (req, res) => {
       await setDoc(doc(db, "refferals","main"), {
         AllowedToBeInTeam  :allowedTobeInTeamList,
         MembersAlreadyTaken:[...membersAlreadyInTeamList,req.params.refcodeMember]
-     });
-     res.json({status:"REFERENCE ADDED SUCCESSFULLY"});
+      });
+      res.json({status:"REFERENCE ADDED SUCCESSFULLY"});
 
-    }else if(allowedTobeInTeamList.includes(req.params.refcodeMember) == false){
+    }else if(allowedTobeInTeamList.includes(req.params.refcodeMember) && membersAlreadyInTeamList.includes(req.params.refcodeMember)){
+      res.json({status:"REFERENCE ALREADY TAKEN"});
+    }
+    else if(allowedTobeInTeamList.includes(req.params.refcodeMember) == false){
       res.json({status:"REFERENCE CODE DOESN't EXIST"});
     }
 
