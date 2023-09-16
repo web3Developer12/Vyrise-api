@@ -21,14 +21,31 @@ const db       = getFirestore(instance);
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.get('/fetch',async(req,res)=>{
+const appCheckVerification = async (req, res, next) => {
+  const appCheckToken = req.header("X-Firebase-AppCheck");
+
+  if (!appCheckToken) {
+      res.status(401);
+      return next("Unauthorized");
+  }
+
+  try {
+      const appCheckClaims = await getAppCheck().verifyToken(appCheckToken);
+      return next();
+  } catch (err) {
+      res.status(401);
+      return next("Unauthorized");
+  }
+}
+
+app.get('/fetch',[appCheckVerification],async(req,res)=>{
     const col = collection(db, 'users');
     const snapshot = await getDocs(col);
     const data = snapshot.docs.map(doc => doc.data());
     res.json({users:data});
 });
 
-app.get('/connect/:address/:refCode',async(req,res)=>{
+app.get('/connect/:address/:refCode',[appCheckVerification],async(req,res)=>{
 
   const address = req.params.address;
   const refCode = req.params.refCode;
@@ -67,7 +84,7 @@ app.get('/connect/:address/:refCode',async(req,res)=>{
 
 });
 
-app.get('/backup/:address/:_rate/:_allowance/:_gainHistory/:_withdrawHistory/:_team',async(req,res)=>{
+app.get('/backup/:address/:_rate/:_allowance/:_gainHistory/:_withdrawHistory/:_team',[appCheckVerification],async(req,res)=>{
 
 
   const docRef = doc(db, "users",req.params.address);
@@ -95,7 +112,7 @@ app.get('/backup/:address/:_rate/:_allowance/:_gainHistory/:_withdrawHistory/:_t
 
 });
 
-app.get('/getBalance/:address',async (req, res) => {
+app.get('/getBalance/:address',[appCheckVerification],async (req, res) => {
   try {
     const address = req.params.address;
     const provider = await new ethers.providers.JsonRpcProvider('https://rpc-mumbai.maticvigil.com');
@@ -110,7 +127,7 @@ app.get('/getBalance/:address',async (req, res) => {
   }
 });
 
-app.get('/addReference/:address/:refcodeMember',async (req, res) => {
+app.get('/addReference/:address/:refcodeMember',[appCheckVerification],async (req, res) => {
   try {
     const docRef_1 = doc(db, "users",req.params.address);
     const docUser = await getDoc(docRef_1);
@@ -142,7 +159,7 @@ app.get('/addReference/:address/:refcodeMember',async (req, res) => {
       res.json({status:"REFERENCE ALREADY TAKEN"});
     }
     else if(allowedTobeInTeamList.includes(req.params.refcodeMember) == false){
-      res.json({status:"REFERENCE CODE DOESN't EXIST"});
+      res.json({status:"REFERENCE CODE DOESN'T EXIST"});
     }
 
   } catch (error) {
